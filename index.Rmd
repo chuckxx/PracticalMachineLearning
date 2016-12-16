@@ -1,0 +1,122 @@
+---
+title: "Practical Machine Learning Course Project"
+author: "Charles Smith"
+date: "November 14, 2016"
+output: html_document
+---
+
+## Background
+
+Using devices such as _Jawbone Up_, _Nike FuelBand_, and _Fitbit_ it is now possible to collect a large amount of data about personal activity relatively inexpensively.  These types of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks.  One thing that people regularly do is quantify how _much_ of a particular activity they do, but they rarely quantify _how well they do it_.  In this project, the goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants who were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the [Human Activity Recognition](http://groupware.les.inf.puc-rio.br/har) website (see the section on the Weight Lifting Exercise Dataset).
+
+## Data
+
+The training data for this project is available here: [Training Data](https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv)
+
+The test data is available here: [Test Data](https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv)
+
+The [Human Activity Recognition](http://groupware.les.inf.puc-rio.br/har) project has been very generous in allowing their data to be used for this assignment.
+
+## Project Instructions
+
+The goal of this project is to predict the manner in which the participants did the exercise.  This is the "classe" variable in the training set (Class A corresponds to the specified execution of the exercise, while the other 4 classes correspond to common mistakes).
+
+You may use any of the other variables to predict with.  You should create a report describing how you built your model, how you used cross validation, what you think the expected out of sample error is, and why you made the choices you did.  You will also use your model to predict 20 different test cases.
+
+## Getting and Cleaning the Data
+
+```{r}
+trainingUrl <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+# download.file(trainingUrl,destfile="pml-training.csv")
+
+testingUrl <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+# download.file(testingUrl,destfile="pml-testing.csv")
+
+# setwd("c:/Users/Chuck/Documents/Coursera/PracticalMachineLearning")
+
+trainingData <- read.csv("pml-training.csv",header=TRUE)
+testingData <- read.csv("pml-testing.csv",header=TRUE)
+
+dim(trainingData)
+dim(testingData)
+```
+A visual inspection of the data in Excel shows a lot of missing data (NA or empty string). I won't use columns with NAs as predictors.  I will use the exercise variables (belt, arm, dumbbell, and forearm variables) that have complete data as the predictors for the classe variable.
+
+```{r}
+missingValues <- sapply(trainingData,function(x) any(is.na(x) | x == ""))
+predictors <- (missingValues == FALSE) & grepl("belt|[^(fore)]arm|dumbbell|forearm",names(missingValues))
+predictors <- names(missingValues)[predictors]
+predictors
+trainingData <- trainingData[,c("classe",predictors)]
+dim(trainingData)
+```
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+library(caret)
+library(lattice)
+```
+```{r}
+set.seed(33)
+# split into 60% training, 40% testing
+trainingSet <- createDataPartition(trainingData$classe, p=0.6, list=FALSE)
+trainingPartition <- trainingData[trainingSet,]
+testPartition <- trainingData[-trainingSet,]
+dim(trainingPartition)
+dim(testPartition)
+```
+## Cross-Validation
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+# Control Parameters for Train - preprocessing and K-fold (10-fold) cross validation
+centered_scaled = c("center","scale")
+train_ctl <- trainControl(method = "cv", number = 10)
+
+# gradient boosting
+gradBoostModel <- train(classe ~ .,
+                       data = trainingPartition,
+                       method = "gbm",
+                       metric = "Kappa",
+                       preProcess = centered_scaled,
+                       trControl = train_ctl,
+                       verbose = FALSE)
+
+# random forest
+randomForestModel <- train(classe ~ .,
+                          data = trainingPartition,
+                          method = "rf",
+                          metric = "Kappa",
+                          preProcess = centered_scaled,
+                          trControl = train_ctl)
+
+modelCompare <- resamples(list(randomForest = randomForestModel, gradientBoost = gradBoostModel))
+summary(modelCompare)
+bwplot(modelCompare, metric = "Kappa", main = "Model Comparison")
+randomForestModel
+
+```
+The random forest model has the highest accuracy rate so that's the model I will go forward with.
+
+## Test the Model Using the Test Data Partition
+```{r}
+predictTest <- predict(randomForestModel, testPartition)
+confusionMatrix(testPartition$classe, predictTest)
+
+# show the expected out of sample error (OOB estimate of error rate)
+randomForestModel$finalModel
+```
+## Test Using the Test Data File (pml_testing.csv)
+```{r}
+finalTestData <- testingData[,which(names(testingData) %in% names(trainingData))]
+finalTest <- predict(randomForestModel, newdata=finalTestData)
+finalTestDf <- as.data.frame(finalTest)
+finalTestDf
+```
+```{r}
+# Prepare the test data predictions for submission
+pml_write_files = function(x) {
+        n = length(x)
+        for (i in 1:n) {
+                filename = paste0("problem_id_",i,".txt")
+                write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+        }
+}
+pml_write_files(finalTest)
+```
