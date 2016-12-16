@@ -11,7 +11,7 @@
 
 <meta name="author" content="Charles Smith" />
 
-<meta name="date" content="2016-11-14" />
+<meta name="date" content="2016-12-15" />
 
 <title>Practical Machine Learning Course Project</title>
 
@@ -118,7 +118,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">Practical Machine Learning Course Project</h1>
 <h4 class="author"><em>Charles Smith</em></h4>
-<h4 class="date"><em>November 14, 2016</em></h4>
+<h4 class="date"><em>December 15, 2016</em></h4>
 
 </div>
 
@@ -155,7 +155,7 @@ dim(trainingData)</code></pre>
 <pre><code>## [1] 19622   160</code></pre>
 <pre class="r"><code>dim(testingData)</code></pre>
 <pre><code>## [1]  20 160</code></pre>
-<p>A visual inspection of the data in Excel shows a lot of missing data (NA or empty string). I won’t use columns with NAs as predictors. I will use the exercise variables (belt, arm, dumbbell, and forearm variables) that have complete data as the predictors for the classe variable.</p>
+<p>A visual inspection of the data in Excel shows a lot of missing data (NA or empty string). I will use the exercise variables (belt, arm, dumbbell, and forearm variables) that have complete data as the predictors for the classe variable.</p>
 <pre class="r"><code>missingValues &lt;- sapply(trainingData,function(x) any(is.na(x) | x == &quot;&quot;))
 predictors &lt;- (missingValues == FALSE) &amp; grepl(&quot;belt|[^(fore)]arm|dumbbell|forearm&quot;,names(missingValues))
 predictors &lt;- names(missingValues)[predictors]
@@ -309,6 +309,7 @@ randomForestModel$finalModel</code></pre>
 ## C    0   22 2027    5    0 0.0131450828
 ## D    0    0   33 1895    2 0.0181347150
 ## E    0    0    3    2 2160 0.0023094688</code></pre>
+<p>The expected out of sample error (OOB estimate of error rate) is 0.79%</p>
 </div>
 <div id="test-using-the-test-data-file-pml_testing.csv" class="section level2">
 <h2>Test Using the Test Data File (pml_testing.csv)</h2>

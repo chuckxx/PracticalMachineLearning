@@ -1,7 +1,7 @@
 ---
 title: "Practical Machine Learning Course Project"
 author: "Charles Smith"
-date: "November 14, 2016"
+date: "December 15, 2016"
 output: html_document
 ---
 
@@ -40,7 +40,7 @@ testingData <- read.csv("pml-testing.csv",header=TRUE)
 dim(trainingData)
 dim(testingData)
 ```
-A visual inspection of the data in Excel shows a lot of missing data (NA or empty string). I won't use columns with NAs as predictors.  I will use the exercise variables (belt, arm, dumbbell, and forearm variables) that have complete data as the predictors for the classe variable.
+A visual inspection of the data in Excel shows a lot of missing data (NA or empty string). I will use the exercise variables (belt, arm, dumbbell, and forearm variables) that have complete data as the predictors for the classe variable.
 
 ```{r}
 missingValues <- sapply(trainingData,function(x) any(is.na(x) | x == ""))
@@ -102,6 +102,8 @@ confusionMatrix(testPartition$classe, predictTest)
 # show the expected out of sample error (OOB estimate of error rate)
 randomForestModel$finalModel
 ```
+The expected out of sample error (OOB estimate of error rate) is 0.79%
+
 ## Test Using the Test Data File (pml_testing.csv)
 ```{r}
 finalTestData <- testingData[,which(names(testingData) %in% names(trainingData))]
