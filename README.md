@@ -1,7 +1,7 @@
 # PracticalMachineLearning
 Coursera Practical Machine Learning Course Project
 
-Click [this link](https://chuckxx.github.io/PracticalMachineLearning/) to view index.html as a web page.
+## _Click [this link](https://chuckxx.github.io/PracticalMachineLearning/) to view index.html as a web page._
 
 ## Background
 
